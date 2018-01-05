@@ -6,12 +6,12 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/Cidan/pepper/states"
-
 	"github.com/Cidan/pepper/graph"
+	"github.com/Cidan/pepper/states"
 
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
+	"github.com/mitchellh/mapstructure"
 )
 
 type ShallowWalkFn func(string, string, string, ast.Node) error
@@ -20,7 +20,7 @@ type astVertex struct {
 	state   string
 	command string
 	name    string
-	n       ast.Node
+	n       map[string]interface{}
 }
 
 type Schema struct {
@@ -81,31 +81,18 @@ func (s *Schema) Generate() error {
 	// Our graph now has every vertex, let's make the edges
 	for vertex := range s.graph.Vertices() {
 		v := vertex.(*astVertex)
+		err := s.checkReq(v)
+		if err != nil {
+			return err
+		}
 		switch v.state {
 		case "apt":
 			o := &states.Apt{}
-			err := hcl.DecodeObject(o, v.n)
+			err := mapstructure.Decode(v.n, o)
 			if err != nil {
 				return err
 			}
-			if o.Requires != "" {
-				suuid := strings.Replace(o.Requires, ".", "", -1)
-				tuuid := v.state + v.command + v.name
-				err := s.graph.LinkViaUUID(suuid, tuuid)
-				if err == graph.ErrSourceVertexNotExists {
-					return fmt.Errorf("unable to find 'requires' state '%s', which %s.%s.%s depends on",
-						o.Requires, v.state, v.command, v.name)
-				}
-				if err == graph.ErrTargetVertexNotExists {
-					return fmt.Errorf("unable to find target state %s.%s.%s which '%s' points to",
-						v.state, v.command, v.name, o.Requires)
-				}
-				if err != nil {
-					return err
-				}
-			} else {
-				s.graph.LinkToRoot(v)
-			}
+			fmt.Printf("%v\n", o)
 		default:
 			return errors.New("Unknown stanza " + v.state)
 		}
@@ -119,8 +106,53 @@ func (s *Schema) Generate() error {
 	return nil
 }
 
+func (s *Schema) checkReq(v *astVertex) error {
+	switch req := v.n["requires"].(type) {
+	case []string:
+		for _, r := range req {
+			err := s.setEdge(r, v)
+			if err != nil {
+				return err
+			}
+		}
+	case string:
+		err := s.setEdge(req, v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Schema) setEdge(req string, v *astVertex) error {
+	if req != "" {
+		suuid := strings.Replace(req, ".", "", -1)
+		tuuid := v.state + v.command + v.name
+		err := s.graph.LinkViaUUID(suuid, tuuid)
+		if err == graph.ErrSourceVertexNotExists {
+			return fmt.Errorf("unable to find 'requires' state '%s', which %s.%s.%s depends on",
+				req, v.state, v.command, v.name)
+		}
+		if err == graph.ErrTargetVertexNotExists {
+			return fmt.Errorf("unable to find target state %s.%s.%s which '%s' points to",
+				v.state, v.command, v.name, req)
+		}
+		if err != nil {
+			return err
+		}
+	} else {
+		s.graph.LinkToRoot(v)
+	}
+	return nil
+}
+
 func (s *Schema) createVertex(state, command, name string, n ast.Node) error {
-	v := &astVertex{state, command, name, n}
+	m := make(map[string]interface{})
+	err := hcl.DecodeObject(&m, n)
+	if err != nil {
+		return err
+	}
+	v := &astVertex{state, command, name, m}
 	return s.graph.AddVertex(v, state+command+name)
 }
 

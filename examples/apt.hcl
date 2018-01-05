@@ -8,7 +8,7 @@ apt install base_system {
 }
 
 apt install dep {
-  requires = "apt.install.other_stuff"
+  requires = ["apt.install.other_stuff"]
 }
 
 apt install other_stuff {

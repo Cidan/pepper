@@ -1,5 +1,5 @@
-hash: 448d7112d72a930de6fed5f7d1841a0f3afa4cfe433e8dc08c84a3a5e1d89a68
-updated: 2018-01-04T20:39:11.029878-08:00
+hash: 3b3c7dcb91699d91e39291563731acfac960b8ae0550873744e1a6c66aaf4911
+updated: 2018-01-04T23:24:06.2177619-08:00
 imports:
 - name: github.com/hashicorp/go-multierror
   version: b7773ae218740a7be65057fc60b366a49b538a44
@@ -14,6 +14,8 @@ imports:
   - json/parser
   - json/scanner
   - json/token
+- name: github.com/mitchellh/mapstructure
+  version: 06020f85339e21b2478f756a78e295255ffa4d6a
 - name: github.com/sirupsen/logrus
   version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 testImports: []

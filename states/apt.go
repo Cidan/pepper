@@ -1,7 +1,8 @@
 package states
 
 type Apt struct {
-	Requires string `hcl:"requires"`
+	State
+	requires []string
 }
 
 func NewApt() *Apt {

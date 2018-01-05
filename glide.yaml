@@ -4,3 +4,4 @@ import:
 - package: github.com/hashicorp/go-multierror
 - package: github.com/sirupsen/logrus
   version: ~1.0.4
+- package: github.com/mitchellh/mapstructure

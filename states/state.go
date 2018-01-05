@@ -1,4 +1,3 @@
 package states
 
-type Base struct {
-}
+type State interface{}
