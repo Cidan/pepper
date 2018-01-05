@@ -1,0 +1,3 @@
+package: github.com/Cidan/pepper
+import:
+- package: github.com/hashicorp/hcl
