@@ -21,6 +21,10 @@ var (
 
 	// ErrVertexNotExists is returned when a vertex is used which does not exist
 	ErrVertexNotExists = errors.New("digraph: vertex does not exist")
+
+	ErrSourceVertexNotExists = errors.New("digraph: vertex does not exist")
+
+	ErrTargetVertexNotExists = errors.New("digraph: vertex does not exist")
 )
 
 // Vertex represents a vertex or "node" in the digraph
@@ -78,11 +82,11 @@ func (d *Digraph) AddEdge(source Vertex, target Vertex) error {
 	}
 
 	if _, found := d.adjList[source]; !found {
-		return ErrVertexNotExists
+		return ErrSourceVertexNotExists
 	}
 
 	if _, found := d.adjList[target]; !found {
-		return ErrVertexNotExists
+		return ErrTargetVertexNotExists
 	}
 
 	// Check if this digraph already has this edge
@@ -125,8 +129,11 @@ func (d *Digraph) LinkToRoot(target Vertex) error {
 func (d *Digraph) LinkViaUUID(source, target string) error {
 	s, sok := d.uuidMap[source]
 	t, tok := d.uuidMap[target]
-	if !sok || !tok {
-		return ErrVertexNotExists
+	if !sok {
+		return ErrSourceVertexNotExists
+	}
+	if !tok {
+		return ErrTargetVertexNotExists
 	}
 	return d.AddEdge(s, t)
 }

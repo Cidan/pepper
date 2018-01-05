@@ -79,7 +79,7 @@ func (s *Schema) Generate() error {
 	}
 
 	// Our graph now has every vertex, let's make the edges
-	for vertex, _ := range s.graph.Vertices() {
+	for vertex := range s.graph.Vertices() {
 		v := vertex.(*astVertex)
 		switch v.state {
 		case "apt":
@@ -92,6 +92,14 @@ func (s *Schema) Generate() error {
 				suuid := strings.Replace(o.Requires, ".", "", -1)
 				tuuid := v.state + v.command + v.name
 				err := s.graph.LinkViaUUID(suuid, tuuid)
+				if err == graph.ErrSourceVertexNotExists {
+					return fmt.Errorf("unable to find 'requires' state '%s', which %s.%s.%s depends on",
+						o.Requires, v.state, v.command, v.name)
+				}
+				if err == graph.ErrTargetVertexNotExists {
+					return fmt.Errorf("unable to find target state %s.%s.%s which '%s' points to",
+						v.state, v.command, v.name, o.Requires)
+				}
 				if err != nil {
 					return err
 				}
@@ -105,7 +113,7 @@ func (s *Schema) Generate() error {
 	}
 	op, err := s.graph.Print(s.graph.Root(), true)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	fmt.Printf("Graph output success\n%s", op)
 	return nil
@@ -116,18 +124,6 @@ func (s *Schema) createVertex(state, command, name string, n ast.Node) error {
 	return s.graph.AddVertex(v, state+command+name)
 }
 
-/*
-	g := graph.New()
-	// Root of the world
-	ol := hclRoot.Node.(*ast.ObjectList)
-	ShallowWalk(*ol, func(state, command, name string, n ast.Node) {
-		fmt.Printf("Found %s %s %s with node %v", state, command, name, n)
-	})
-
-	g.AddVertex(ol)
-	//ol.Items[0].
-	//hcl.
-*/
 // ShallowWalk will walk only the top level of the tree and call
 // the supplied function with the key, command, name, and node under it.
 func ShallowWalk(n ast.ObjectList, fn ShallowWalkFn) error {
