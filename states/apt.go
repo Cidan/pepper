@@ -1,10 +1,9 @@
 package states
 
 type Apt struct {
-	State
-	requires []string
+	Packages []string `mapstructure:"packages"`
 }
 
-func NewApt() *Apt {
-	return &Apt{}
+func (a *Apt) Generate() string {
+	return ""
 }

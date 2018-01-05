@@ -1,31 +1,22 @@
-package schema
+package plan
 
-/*
-	Credit to the TerraForm team for the idea of this implementation.
-	It doesn't function quite the same, but it's similar.
-*/
-type ValueType int
+// A plan is a full set of actions to carry out on a single
+// resource/server. It contains the full DAG for what steps
+// to take in order to meet the required state.
 
-const (
-	TypeInvalid ValueType = iota
-	TypeBool
-	TypeInt
-	TypeFloat
-	TypeString
-	TypeList
-	TypeMap
+import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"strings"
+
+	"github.com/Cidan/pepper/graph"
+	"github.com/Cidan/pepper/states"
+	"github.com/hashicorp/hcl"
+	"github.com/hashicorp/hcl/hcl/ast"
+	"github.com/mitchellh/mapstructure"
 )
 
-type Schema struct {
-	Type        ValueType
-	Optional    bool
-	Required    bool
-	Default     interface{}
-	Elem        interface{}
-	Description string
-}
-
-/*
 type ShallowWalkFn func(string, string, string, ast.Node) error
 
 type astVertex struct {
@@ -35,19 +26,19 @@ type astVertex struct {
 	n       map[string]interface{}
 }
 
-type Schema struct {
+type Plan struct {
 	graph *graph.Digraph
 	ast   []*ast.File
 }
 
-func New() *Schema {
-	return &Schema{
+func New() *Plan {
+	return &Plan{
 		graph: graph.New(),
 	}
 }
 
 // ReadFile reads single file and add to the AST list
-func (s *Schema) ReadFile(path string) error {
+func (s *Plan) ReadFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -64,7 +55,7 @@ func (s *Schema) ReadFile(path string) error {
 
 // ReadDir will read an entire directory for HCL files
 // and add it to the AST list
-func (s *Schema) ReadDir(dir string) error {
+func (s *Plan) ReadDir(dir string) error {
 
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -80,9 +71,9 @@ func (s *Schema) ReadDir(dir string) error {
 	return nil
 }
 
-// Generate our full schema within a DAG and resolve
+// Generate our full Plan within a DAG and resolve
 // any conflicts
-func (s *Schema) Generate() error {
+func (s *Plan) Generate() error {
 	for _, root := range s.ast {
 		err := ShallowWalk(*root.Node.(*ast.ObjectList), s.createVertex)
 		if err != nil {
@@ -97,14 +88,15 @@ func (s *Schema) Generate() error {
 		if err != nil {
 			return err
 		}
+
+		// TODO: move this to another function
 		switch v.state {
 		case "apt":
-			o := &states.Apt{}
-			err := mapstructure.Decode(v.n, o)
+			var o states.Apt
+			err := s.decode(v.n, &o)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("%v\n", o)
 		default:
 			return errors.New("Unknown stanza " + v.state)
 		}
@@ -118,7 +110,21 @@ func (s *Schema) Generate() error {
 	return nil
 }
 
-func (s *Schema) checkReq(v *astVertex) error {
+func (s *Plan) decode(m map[string]interface{}, raw interface{}) error {
+	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
+		ErrorUnused: true,
+		Metadata:    nil,
+		Result:      raw,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(m)
+}
+
+func (s *Plan) checkReq(v *astVertex) error {
 	switch req := v.n["requires"].(type) {
 	case []string:
 		for _, r := range req {
@@ -132,11 +138,19 @@ func (s *Schema) checkReq(v *astVertex) error {
 		if err != nil {
 			return err
 		}
+	case nil:
+		err := s.setEdge("", v)
+		if err != nil {
+			return err
+		}
 	}
+	// Delete the requires stanza
+	delete(v.n, "requires")
 	return nil
 }
 
-func (s *Schema) setEdge(req string, v *astVertex) error {
+func (s *Plan) setEdge(req string, v *astVertex) error {
+
 	if req != "" {
 		suuid := strings.Replace(req, ".", "", -1)
 		tuuid := v.state + v.command + v.name
@@ -158,7 +172,7 @@ func (s *Schema) setEdge(req string, v *astVertex) error {
 	return nil
 }
 
-func (s *Schema) createVertex(state, command, name string, n ast.Node) error {
+func (s *Plan) createVertex(state, command, name string, n ast.Node) error {
 	m := make(map[string]interface{})
 	err := hcl.DecodeObject(&m, n)
 	if err != nil {
@@ -182,4 +196,3 @@ func ShallowWalk(n ast.ObjectList, fn ShallowWalkFn) error {
 	}
 	return nil
 }
-*/

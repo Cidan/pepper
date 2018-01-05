@@ -1,11 +1,11 @@
 package main
 
-import "github.com/Cidan/pepper/schema"
+import "github.com/Cidan/pepper/plan"
 
 func main() {
-	s := schema.New()
-	s.ReadDir("./examples")
-	err := s.Generate()
+	p := plan.New()
+	p.ReadDir("./examples")
+	err := p.Generate()
 	if err != nil {
 		panic(err)
 	}
