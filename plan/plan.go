@@ -24,6 +24,7 @@ type astVertex struct {
 	command string
 	name    string
 	n       map[string]interface{}
+	states  states.States
 }
 
 type Plan struct {
@@ -75,7 +76,7 @@ func (s *Plan) ReadDir(dir string) error {
 // any conflicts
 func (s *Plan) Generate() error {
 	for _, root := range s.ast {
-		err := ShallowWalk(*root.Node.(*ast.ObjectList), s.createVertex)
+		err := shallowWalk(*root.Node.(*ast.ObjectList), s.createVertex)
 		if err != nil {
 			return err
 		}
@@ -92,16 +93,22 @@ func (s *Plan) Generate() error {
 		// TODO: move this to another function
 		switch v.state {
 		case "apt":
-			var o states.Apt
+			var o *states.Apt
 			err := s.decode(v.n, &o)
 			if err != nil {
 				return err
 			}
+			v.states = o
 		default:
 			return errors.New("Unknown stanza " + v.state)
 		}
-
 	}
+
+	// TODO:
+	// DAG is now created, let's walk the graph and generate
+	// the execution steps.
+
+	// TODO: move this to a print func
 	op, err := s.graph.Print(s.graph.Root(), true)
 	if err != nil {
 		return err
@@ -178,13 +185,13 @@ func (s *Plan) createVertex(state, command, name string, n ast.Node) error {
 	if err != nil {
 		return err
 	}
-	v := &astVertex{state, command, name, m}
+	v := &astVertex{state, command, name, m, nil}
 	return s.graph.AddVertex(v, state+command+name)
 }
 
 // ShallowWalk will walk only the top level of the tree and call
 // the supplied function with the key, command, name, and node under it.
-func ShallowWalk(n ast.ObjectList, fn ShallowWalkFn) error {
+func shallowWalk(n ast.ObjectList, fn ShallowWalkFn) error {
 	for _, item := range n.Items {
 		if len(item.Keys) < 3 {
 			return errors.New("Invalid state")
