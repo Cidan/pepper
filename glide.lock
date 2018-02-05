@@ -1,5 +1,5 @@
 hash: 48db0ba9af05c96c5e80d25d37c9a9b4eddb1435fd6c0beec55d9d0555c08e7a
-updated: 2018-01-08T23:45:14.7946787-08:00
+updated: 2018-02-04T22:55:02.368574011-05:00
 imports:
 - name: github.com/blang/semver
   version: 2ee87856327ba09384cabd113bc6b5d174e9ec0f
@@ -10,26 +10,16 @@ imports:
   subpackages:
   - hcl/ast
   - hcl/parser
-  - hcl/scanner
-  - hcl/strconv
   - hcl/token
   - json/parser
+  - hcl/scanner
+  - hcl/strconv
   - json/scanner
   - json/token
 - name: github.com/mitchellh/mapstructure
-  version: 06020f85339e21b2478f756a78e295255ffa4d6a
+  version: a4e142e9c047c904fa2f1e144d9a84e6133024bc
 - name: github.com/sirupsen/logrus
   version: d682213848ed68c0a260ca37d6dd5ace8423f5ba
 - name: github.com/stretchr/testify
-  version: b91bfb9ebec76498946beb6af7c0230c7cc7ba6c
-  subpackages:
-  - assert
-testImports:
-- name: github.com/davecgh/go-spew
-  version: ecdeabc65495df2dec95d7c4a4c3e021903035e5
-  subpackages:
-  - spew
-- name: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
-  subpackages:
-  - difflib
+  version: 12b6f73e6084dad08a7c6e575284b177ecafbc71
+devImports: []

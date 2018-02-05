@@ -17,6 +17,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// ShallowWalkFn func def
 type ShallowWalkFn func(string, string, string, ast.Node) error
 
 type astVertex struct {
@@ -27,11 +28,13 @@ type astVertex struct {
 	states  states.States
 }
 
+// Plan check
 type Plan struct {
 	graph *graph.Digraph
 	ast   []*ast.File
 }
 
+// New Stuff
 func New() *Plan {
 	return &Plan{
 		graph: graph.New(),
@@ -89,18 +92,9 @@ func (s *Plan) Generate() error {
 		if err != nil {
 			return err
 		}
-
-		// TODO: move this to another function
-		switch v.state {
-		case "apt":
-			var o *states.Apt
-			err := s.decode(v.n, &o)
-			if err != nil {
-				return err
-			}
-			v.states = o
-		default:
-			return errors.New("Unknown stanza " + v.state)
+		err = s.getState(v)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -114,6 +108,28 @@ func (s *Plan) Generate() error {
 		return err
 	}
 	fmt.Printf("Graph output success\n%s", op)
+	return nil
+}
+
+// getState will generate a state object for this node and
+// update the node.
+func (s *Plan) getState(v *astVertex) error {
+	switch v.state {
+	case "apt":
+		var o *states.Apt
+		if err := s.decode(v.n, &o); err != nil {
+			return err
+		}
+		v.states = o
+	case "shell":
+		var o *states.Shell
+		if err := s.decode(v.n, &o); err != nil {
+			return err
+		}
+		v.states = o
+	default:
+		return errors.New("Unknown stanza " + v.state)
+	}
 	return nil
 }
 
