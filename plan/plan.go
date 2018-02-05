@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/hcl"
 	"github.com/hashicorp/hcl/hcl/ast"
 	"github.com/mitchellh/mapstructure"
+	"github.com/rs/zerolog/log"
 )
 
 // ShallowWalkFn func def
@@ -114,7 +115,8 @@ func (s *Plan) Generate() error {
 // Execute the plan
 func (s *Plan) Execute() {
 	s.graph.Walk(func(v graph.Vertex) {
-		fmt.Printf("executing %s\n", v.(*astVertex).name)
+		vv := v.(*astVertex)
+		log.Info().Str("state", vv.name).Msg("Executing state")
 		v.(*astVertex).states.Execute()
 	})
 }
