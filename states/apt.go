@@ -1,7 +1,6 @@
 package states
 
 import (
-	"fmt"
 	"os/exec"
 
 	"github.com/Cidan/pepper/action"
@@ -53,18 +52,16 @@ func (a *Apt) run() error {
 		"-y",
 		"--force-yes",
 		"-o",
-		"Dpkg::Options::=\"--force-confdef\"",
+		"DPkg::Options::=--force-confdef",
 		"-o",
-		"Dpkg::Options::=\"--force-confold\"",
-		"-o",
-		"Dpkg::Options::=\"-i\"",
+		"DPkg::Options::=--force-confold",
 		"install",
 	}, a.Packages...)
 	log.Debug().Strs("args", args).Msg("apt args")
 	cmd := exec.Command("apt-get", args...)
 	//cmd.Env = []string{"DEBIAN_FRONTEND=noninteractive"}
 	b, err := cmd.CombinedOutput()
-	fmt.Printf("output: %s\n", string(b))
+	log.Debug().Str("output", string(b)).Msg("APT output")
 
 	return err
 	// TODO:

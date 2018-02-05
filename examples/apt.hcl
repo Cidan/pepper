@@ -3,5 +3,6 @@ apt install base_system {
   packages = [
     "htop",
     "atop",
+    "yasm",
     ]
 }
