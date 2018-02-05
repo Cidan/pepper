@@ -104,11 +104,13 @@ func (s *Plan) Generate() error {
 	// the execution steps.
 
 	// TODO: move this to a print func
-	op, err := s.graph.Print(s.graph.Root(), true)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("Graph output success\n%s", op)
+	/*
+		op, err := s.graph.Print(s.graph.Root(), true)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Graph output success\n%s", op)
+	*/
 	return nil
 }
 
