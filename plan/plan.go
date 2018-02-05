@@ -111,6 +111,14 @@ func (s *Plan) Generate() error {
 	return nil
 }
 
+// Execute the plan
+func (s *Plan) Execute() {
+	s.graph.Walk(func(v graph.Vertex) {
+		fmt.Printf("executing %s\n", v.(*astVertex).name)
+		v.(*astVertex).states.Execute()
+	})
+}
+
 // getState will generate a state object for this node and
 // update the node.
 func (s *Plan) getState(v *astVertex) error {

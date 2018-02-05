@@ -30,6 +30,9 @@ var (
 // Vertex represents a vertex or "node" in the digraph
 type Vertex interface{}
 
+// WalkFn is a function called when walking the tree
+type WalkFn func(v Vertex)
+
 // Digraph represents a "digraph", or directed graph data structure
 type Digraph struct {
 	m           sync.RWMutex
@@ -280,6 +283,19 @@ func (d *Digraph) Vertices() map[Vertex]*AdjacencyList {
 	return d.adjList
 }
 
+// Root node in the tree
 func (d *Digraph) Root() Vertex {
 	return d.root
+}
+
+// Walk the tree, depth first
+func (d *Digraph) Walk(fn WalkFn) {
+	d.doWalk(d.root, fn)
+}
+
+func (d *Digraph) doWalk(v Vertex, fn WalkFn) {
+	fn(v)
+	for _, node := range d.adjList[v].Adjacent() {
+		d.doWalk(node, fn)
+	}
 }
